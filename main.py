@@ -1,7 +1,7 @@
 '''
-This is the main file for my senior exhibition gamma food insecurity game
+This is the script for my senior exhibition gamma food insecurity game
 
-Farming simulator with nutrition and poundage outputs
+It is a farming simulator with nutrition and poundage outputs
 '''
 #Imports outside functions
 import pygame as pg, random
@@ -26,6 +26,7 @@ red = (255, 0, 0)
 #UI Colors
 slotColor = (100, 100, 100)
 nextWeekButtonColor = (198, 45, 22)
+endScreenOptionColor = (100, 100, 100)
 
 #Row Specific Colors
 rowColor = (107, 62, 12)
@@ -48,7 +49,7 @@ vineColor = (8, 128, 10)
 
 #Staging Colors 
 growingStageColor = (12, 71, 20)
-readyToHarvestColor = (12, 71, 40)
+readyToHarvestColor = (12, 71, 55)
 
 """================================================================================MAIN BODY OF CODE================================================================================"""
 
@@ -67,6 +68,7 @@ sign = ["Vegetable", "Vegetable", "Vegetable", "Vegetable",  "Vegetable",   "Veg
 mouseClicksCount = 0
 week = 0
 selectedVegetable = "Vegetable"
+vegetableNutritentsTitleWidth = 0
 
 #Total scores
 totalCalories = 0
@@ -88,6 +90,16 @@ SEEDING_STAGE_LOWER_LIMIT = 15
 HARVEST_STAGE_LOWER_LIMIT = 28
 TIME_TO_HARVEST = 13
 
+nextWeekButtonCoords = (1100, 735)
+helpInfoCoord = (1000, 610)
+
+VEGETABLE_OPTIONS_COORDS = (1000, 0)
+SELECTED_VEGETABLE_OPTIONS_COORDS = (VEGETABLE_OPTIONS_COORDS[0], VEGETABLE_OPTIONS_COORDS[1] + 100)
+TOTAL_IMPACT_COORDS = (SELECTED_VEGETABLE_OPTIONS_COORDS[0], SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 130)
+EXPLAINATION_COORDS = (TOTAL_IMPACT_COORDS[0], TOTAL_IMPACT_COORDS[1] + 150)
+
+TOTAL_IMPACT_END_SCREEN_COORDS = (650, 420)
+
 running = True
 
 '''General Functions'''
@@ -102,9 +114,19 @@ class Button:
         self.textSize = textSize
         self.font = pg.font.Font('freesansbold.ttf', self.textSize)
 
+        '''Positions'''
+        #Positions will be in forms of (x,y)
+        #Top Left aready known
+        self.hitboxTopLeft = hitboxTopLeft
+        self.hitboxLength = hitboxLength
+        self.hitboxHitWidth = hitboxHitWidth
+
         if showBackground:
-            pg.draw.rect(screen, backgroundColor, pg.Rect(hitboxTopLeft[0], hitboxTopLeft[1], hitboxLength, hitboxHitWidth), 0)
+            pg.draw.rect(screen, backgroundColor, pg.Rect(self.hitboxTopLeft[0], self.hitboxTopLeft[1], self.hitboxLength, self.hitboxHitWidth), 0)
         
+        if showHitBox:
+            pg.draw.rect(screen, red, pg.Rect(self.hitboxTopLeft[0], self.hitboxTopLeft[1],  self.hitboxLength, self.hitboxHitWidth), 1)
+
         self.img = self.font.render(self.text, True, black)
 
         ''''Draws the Rectangle'''
@@ -117,16 +139,6 @@ class Button:
         self.buttonWidth = self.buttonRect[2]
         self.buttonHeight = self.buttonRect[3]
         #print (self.buttonWidth)
-
-        '''Positions'''
-        #Positions will be in forms of (x,y)
-        #Top Left aready known
-        self.hitboxTopLeft = hitboxTopLeft
-        self.hitboxLength = hitboxLength
-        self.hitboxHitWidth = hitboxHitWidth
-
-        if showHitBox:
-            pg.draw.rect(screen, red, pg.Rect(hitboxTopLeft[0], hitboxTopLeft[1], hitboxLength, hitboxHitWidth), 1)
 
     def getButtonTopLeft (self):
         return self.buttonPositionTopLeft
@@ -153,7 +165,8 @@ def isMouseInPositionOverButton(buttonPositionTopLeft, width, height):
         #print ("Mouse over button!")
         return True
 
-def drawText (screen, topLeftPosition, text, textSize, drawRect = False, showInfo = False):
+def drawText (screen, topLeftPosition, text, textSize, drawRect = False, showInfo = False, getWidth = False):
+    global textWidth
 
     font = pg.font.Font('freesansbold.ttf', int(textSize))
     img = font.render(text, True, black)
@@ -162,12 +175,15 @@ def drawText (screen, topLeftPosition, text, textSize, drawRect = False, showInf
     if showInfo:
         print (textRectangle)
 
+    if getWidth:
+        textWidth = textRectangle[2]
+    
     if drawRect:
         pg.draw.rect(screen, white, textRectangle)
 
     screen.blit(img, topLeftPosition)
 
-def readableText(rawText, convertgTokg=False):
+def readableText(rawText, convertgTokg = False):
 
     if convertgTokg:
         rawText = int(rawText / 1000)
@@ -189,11 +205,40 @@ def readableText(rawText, convertgTokg=False):
 
 def closeWindow():
     global running
+    
+    running = False
+    quit()
 
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            running = False
-            quit()
+def autoTextBreak (text, coords, maxCharacters = 55, characterSize = 14):
+
+    oldSpaceIteration = 0
+    lastSpaceIteration = 0
+    lineIteration = 0
+
+    #Code that when the line runs out of characters, backs up to the last space, and sends that to a function
+    for letterIteration in range(len(text)):
+
+        if text[letterIteration] == " ":
+            #Stores the last space position
+            lastSpaceIteration = letterIteration + 1
+            #print(lastSpaceIteration)
+
+        if letterIteration % maxCharacters == 0:
+            line = text[oldSpaceIteration:lastSpaceIteration]
+
+            drawText(screen, (coords[0], coords[1] + characterSize * lineIteration), line, characterSize)
+            
+            lineIteration = lineIteration + 1
+            oldSpaceIteration = lastSpaceIteration
+
+        
+        if len(text) - oldSpaceIteration < maxCharacters:
+            #All the rest of the text is displayed
+            line = text[oldSpaceIteration:]
+
+            drawText(screen, (coords[0], coords[1] + characterSize * lineIteration), line, characterSize)
+
+            break
 
 '''-----------------------------------Graphics-----------------------------------'''
 
@@ -211,7 +256,7 @@ def createRows ():
 
 def returnRowNumber ():
     mousePosititon = pg.mouse.get_pos()
-    print (mousePosititon)
+    #print (mousePosititon)
     #if mouse is in a row and check all rows
     for rowIteration in range(len(rows)):
         # dimensionsOfRow is width is 120 and height is 960
@@ -253,7 +298,7 @@ def createSlots ():
         pg.draw.rect(screen, slotColor, pg.Rect(topLeftPosition[0], topLeftPosition[1], 50, 50), 5)
 
 def startup():
-    global nextWeekButton, week, selectedVegetable, totalCalories, totalWieght, totalCarbs, totalProtein, totalFat, rows
+    global nextWeekButton, week, selectedVegetable, totalCalories, totalWieght, totalCarbs, totalProtein, totalFat, rows, vegetableOptionsHelpButton, vegetableNutritionHelpButton, nextWeekHelpButton
 
     #resets variables
     week = 0
@@ -280,21 +325,27 @@ def startup():
     drawEggplant((1373, 60))
 
     #Draws UI
-    drawText(screen, (1000, 0), "Vegetable Options", 40)
+    drawText(screen, VEGETABLE_OPTIONS_COORDS, "Vegetable Options", 40)
     drawSelectedVegetableOptions()
     drawTotalImpact()
+    drawInstructions()
 
-    nextWeekButtonCoords = (1100, 735)
     nextWeekButton = Button(nextWeekButtonCoords, screen, "Next Week", 40, (nextWeekButtonCoords[0] - 5, nextWeekButtonCoords[1] - 5), 215, 50, showBackground = True, backgroundColor = nextWeekButtonColor)
     drawText (screen, (1045, 690), "Season End: " + str(TIME_TO_END - week) + " weeks", 30) #screen, topLeftPosition, text, textSize
+ 
+    vegetableOptionsHelpButton = Button((VEGETABLE_OPTIONS_COORDS[0] + 360, VEGETABLE_OPTIONS_COORDS[1]), screen, "[?]", 15, (VEGETABLE_OPTIONS_COORDS[0] + 355, VEGETABLE_OPTIONS_COORDS[1] - 5), 30, 30)
+    vegetableNutritionHelpButton = Button((SELECTED_VEGETABLE_OPTIONS_COORDS[0] + 344, SELECTED_VEGETABLE_OPTIONS_COORDS[1]), screen, "[?]", 15, (SELECTED_VEGETABLE_OPTIONS_COORDS[0] + 339, SELECTED_VEGETABLE_OPTIONS_COORDS[1] - 5), 30, 30)
+    nextWeekHelpButton = Button((nextWeekButtonCoords[0] + 213, nextWeekButtonCoords[1] - 2), screen, "[?]", 15, (nextWeekButtonCoords[0] + 208, nextWeekButtonCoords[1] - 5), 30, 30)
 
 def endScreen():
-    global running
+    global running, TOTAL_IMPACT_COORDS
 
     screen.fill(gravelColor)
     drawText(screen, (400, 200), "Thank You for Playing!", 60)
-    playAgainButton = Button((500, 350), screen, "Play Again", 30, (495, 345), 170, 40, showBackground = True, backgroundColor = white)
-    quitButton = Button((850, 350), screen, "Quit", 30, (845, 345), 75, 40, showBackground = True, backgroundColor = white)
+    playAgainButton = Button((500, 350), screen, "Play Again", 30, (495, 345), 170, 40, showBackground = True, backgroundColor = endScreenOptionColor)
+    quitButton = Button((850, 350), screen, "Quit", 30, (845, 345), 75, 40, showBackground = True, backgroundColor = endScreenOptionColor)
+
+    drawTotalImpactEndScreen()
 
     if pg.mouse.get_pressed(3)[0] and playAgainButton.isMouseInPositionInButton():
         startup()
@@ -310,41 +361,41 @@ def clearRow(clickedOnRow):
 
     currentRow = rows[clickedOnRow]
 
-    isSpecial = vegetableInfoDictionary[currentRow[3]][9]
-
     #colors over the plants
     readyToHarvest(currentRow, gravelColor, True)
 
-    pg.draw.rect(screen, gravelColor, pg.Rect(currentRow[0][0],  currentRow[0][1] - 10, 120, 10), 0)
+    pg.draw.rect(screen, gravelColor, pg.Rect(currentRow[0][0],  currentRow[0][1] - 20, 120, 780), 0)
 
     #creates a new row
     pg.draw.rect(screen, rowColor, pg.Rect(currentRow[0][0],  currentRow[0][1], 120, 765), 0)
     
     #Fixes the other rows 
     #If older or equal to 10 then re-draw plant
-    #Row to the left
+    
+    #Left Row
     try:
         rowToTheLeft = rows[clickedOnRow - 1]
-        if rowToTheLeft[2] >= 10 and rowToTheLeft[2] < 13 and not isSpecial:
-            bushyPlantGrowth(rowToTheLeft)
+        vegetable = rowToTheLeft[3]
+        timeToHarvest = vegetableInfoDictionary[vegetable][6]
 
-        elif rowToTheLeft[2] >= 10 and rowToTheLeft[2] < 13 and isSpecial:
-            stalkyPlantGrowth(rowToTheLeft)
+        if rowToTheLeft[2] >= timeToHarvest*3/4 and rowToTheLeft[2] < timeToHarvest: # If growing but big enough to touch the other row
+            plantGrowth(rowToTheLeft)
         
-        elif rowToTheLeft[2] >= 13:
+        elif rowToTheLeft[2] >= timeToHarvest: #If grown
            readyToHarvest(rowToTheLeft)
     except:
         print ("Error on left side")
 
+    #Right Row
     try:
         rowToTheRight = rows[clickedOnRow + 1]
-        if rowToTheRight[2] >= 10 and rowToTheRight[2] < 13 and not isSpecial:
-            bushyPlantGrowth(rowToTheRight)
+        vegetable = rowToTheRight[3]
+        timeToHarvest = vegetableInfoDictionary[vegetable][6]
 
-        elif rowToTheRight[2] >= 10 and rowToTheRight[2] < 13 and isSpecial:
-            stalkyPlantGrowth(rowToTheRight)
-        
-        elif rowToTheLeft[2] >= 13:
+        if rowToTheRight[2] >= timeToHarvest*3/4 and rowToTheRight[2] < timeToHarvest: # If growing
+            plantGrowth(rowToTheRight)
+
+        elif rowToTheRight[2] >= timeToHarvest: #If grown
            readyToHarvest(rowToTheRight)
     except:
         print ("Error on right side")
@@ -354,6 +405,59 @@ def clearRow(clickedOnRow):
     currentRow[2] = 0
     currentRow[3] = "Vegetable"
     currentRow[4] = [False, False, False, False, False]
+
+def nextWeekButtonHandler():
+    global week, rows
+    
+    #print (rows)
+
+    #increments weeks 
+    week = week + 1
+
+    pg.draw.rect(screen, gravelColor, pg.Rect(1045, 690, 500, 30), 0)
+    drawText (screen, (1045, 690), "Season End: " + str(TIME_TO_END - week) + " weeks", 30) #screen, topLeftPosition, text, textSize
+
+    if TIME_TO_END - week == 1:
+        pg.draw.rect(screen, gravelColor, pg.Rect(1045, 690, 500, 30), 0)
+        drawText (screen, (1045, 690), "Season End: " + str(TIME_TO_END - week) + " week", 30) #screen, topLeftPosition, text, textSize
+
+    '''
+    unseeded - 0
+    seeded - 1 week
+    first growth stage - 2 week
+    second growth stage - 3 - 12 weeks
+    Ready to havest - after 13 weeks
+    '''
+    
+    '''Handles time increments changes'''
+    for row in rows:
+
+        seedingStageUpperLimit = row[5]
+
+        #increment all seeded plots if seeded       
+        if not row[2] == 0:
+            
+            row[2] = row[2] + 1
+
+        #Brute-force fix for a bug
+        elif row[1] >= SEEDING_STAGE_LOWER_LIMIT:
+            
+            row[1] = seedingStageUpperLimit
+            row[2] = 2
+            row[4] = [True, True, True, True, False]
+
+        plantInfo = vegetableInfoDictionary[row[3]]
+
+        weeksUntilPlantIsGrown = plantInfo[6] + 1
+
+        if row[2] == 2:
+            sprout(row)
+
+        elif row[2] > 2 and row[2] < weeksUntilPlantIsGrown:
+            plantGrowth(row)
+
+        elif row[2] == weeksUntilPlantIsGrown:
+            readyToHarvest(row)
 
 def fertilize(clickedRow, fertilizeIteration):
     
@@ -410,36 +514,30 @@ def sprout(row):
         pg.draw.rect(screen, growingStageColor, pg.Rect(row[0][0] + 31, seedPlacementY, 5, 5), 0)
         pg.draw.rect(screen, growingStageColor, pg.Rect(row[0][0] + 82, seedPlacementY, 5, 5), 0)
     
-def bushyPlantGrowth(row):
-    week = row[2]
-
-    numberOfWeeksOfGrowth = vegetableInfoDictionary[row[3]][6]
-
-    numberOfPlantsPerRow = vegetableInfoDictionary[row[3]][7]
-    spacing = ROW_HEIGHT / numberOfPlantsPerRow
-
-    #print(numberOfWeeksOfGrowth)
-
-    growthRate = 50/numberOfWeeksOfGrowth
-
-    for plant in range(numberOfPlantsPerRow):
-
-        seedPlacementY = int(row[0][1] + plant * spacing + 10) #The row starts at y: 20 and ends at 765
-
-        #Max is 50 radius min is 5
-        pg.draw.circle(screen, growingStageColor, (row[0][0] + 33, seedPlacementY), round(growthRate*(week-1)))
-        pg.draw.circle(screen, growingStageColor, (row[0][0] + 84, seedPlacementY), round(growthRate*(week-1)))
-
-def stalkyPlantGrowth(row, color = growingStageColor):
+def plantGrowth(row, color = growingStageColor):
     week = row[2]
     vegetable = row[3]
+    special = vegetableInfoDictionary[vegetable][9]
     numberOfWeeksOfGrowth = vegetableInfoDictionary[vegetable][6]
     numberOfPlantsPerRow = vegetableInfoDictionary[vegetable][7]
 
     spacing = ROW_HEIGHT / numberOfPlantsPerRow
 
+    #Regular Plants (bushy and fruit)
+    if not special: #LOL
 
-    if vegetable == "Onion":
+        growthRate = 50/numberOfWeeksOfGrowth
+
+        for plant in range(numberOfPlantsPerRow):
+
+            seedPlacementY = int(row[0][1] + plant * spacing + 10) #The row starts at y: 20 and ends at 765
+
+            #Max is 50 radius min is 5
+            pg.draw.circle(screen, color, (row[0][0] + 33, seedPlacementY), round(growthRate*(week-1)))
+            pg.draw.circle(screen, color, (row[0][0] + 84, seedPlacementY), round(growthRate*(week-1)))
+
+    #Special Plant Onion
+    elif vegetable == "Onion":
 
         growthRate = 12/numberOfWeeksOfGrowth
 
@@ -451,8 +549,8 @@ def stalkyPlantGrowth(row, color = growingStageColor):
             pg.draw.circle(screen, color, (row[0][0] + 33, seedPlacementY), round(growthRate*(week-1)))
             pg.draw.circle(screen, color, (row[0][0] + 84, seedPlacementY), round(growthRate*(week-1)))
 
-            #print (round(growthRate*(week-1)))
-
+            
+    #Special Plant Corn
     elif vegetable == "Corn":
 
         growthRate = 36/numberOfWeeksOfGrowth
@@ -463,14 +561,7 @@ def stalkyPlantGrowth(row, color = growingStageColor):
             
             pg.draw.ellipse(screen, color, [row[0][0] + 33 - round(growthRate*(week-1) * 1/2), seedPlacementY, round(growthRate*(week-1)), (growthRate*(week-1) * 3/4)])
             pg.draw.ellipse(screen, color, [row[0][0] + 84 - round(growthRate*(week-1) * 1/2), seedPlacementY, round(growthRate*(week-1)), (growthRate*(week-1) * 3/4)])
-
-            '''
-            #Max is 50 radius min is 5
-            pg.draw.circle(screen, color, (row[0][0] + 33, seedPlacementY), round(growthRate*(week-1)))
-            pg.draw.circle(screen, color, (row[0][0] + 84, seedPlacementY), round(growthRate*(week-1)))
-            
-            '''
-            
+           
 def readyToHarvest(row, bushColor = readyToHarvestColor, clear = False):
 
     plantInfo = vegetableInfoDictionary[row[3]]
@@ -482,7 +573,7 @@ def readyToHarvest(row, bushColor = readyToHarvestColor, clear = False):
     isSpecial = plantInfo[9]
     vegetable = row[3]
 
-    if producesFruit:
+    if producesFruit: # Fruit bushes like tomatoes, bellpeppers, and eggplant
         
         fruitColor = plantInfo[10]
 
@@ -513,7 +604,7 @@ def readyToHarvest(row, bushColor = readyToHarvestColor, clear = False):
 
                 pg.draw.circle(screen, fruitColor, (fruitPlacementX, plantPlacementY), 8)
 
-    elif isSpecial:
+    elif isSpecial:  # Corn or Onion plants (Stalky plants)
         
         for plant in range(numberOfPlantsPerRow):
 
@@ -521,12 +612,11 @@ def readyToHarvest(row, bushColor = readyToHarvestColor, clear = False):
 
             if vegetable == "Onion":
 
-                stalkyPlantGrowth(row, readyToHarvestColor)
+                plantGrowth(row, readyToHarvestColor)
 
             elif vegetable == "Corn":
-                print (plantPlacementY)
 
-                stalkyPlantGrowth(row, readyToHarvestColor)
+                plantGrowth(row, readyToHarvestColor)
 
                 for plant in range(numberOfPlantsPerRow):
 
@@ -535,7 +625,7 @@ def readyToHarvest(row, bushColor = readyToHarvestColor, clear = False):
                     pg.draw.circle(screen, cornColor, (row[0][0] + 33, plantPlacementY), 7)
                     pg.draw.circle(screen, cornColor, (row[0][0] + 84, plantPlacementY), 7)
 
-    else: #Bush
+    else: #Regular bushes like carrots or potatoes
 
         for plant in range(numberOfPlantsPerRow):
 
@@ -608,12 +698,57 @@ def drawPlantsSwitch (plant, clickedRow):
     else: 
         print ("Error!")
 
+def drawTotalImpactEndScreen ():
+
+    displayTotalCalories = readableText(int(totalCalories))
+
+    if len(str(int(totalWieght))) > 3:
+        displayTotalWieght = readableText(int(totalWieght), True) + "kg"
+    else:
+        displayTotalWieght = readableText(int(totalWieght)) + "g"
+
+    if len(str(int(totalCarbs))) > 3:
+        displayTotalCarbs = readableText(int(totalCarbs), True) + "kg"
+    else:
+        displayTotalCarbs = readableText(int(totalCarbs)) + "g"
+
+    if len(str(int(totalProtein))) > 3:
+        displayTotalProtein = readableText(int(totalProtein), True) + "kg"
+    else:
+        displayTotalProtein = readableText(int(totalProtein)) + "g"
+
+    if len(str(int(totalProtein))) > 3:
+        displayTotalFat = readableText(int(totalFat), True) + "kg"
+    else:
+        displayTotalFat = readableText(int(totalFat))  + "g"
+
+    #Draws title
+    drawText(screen, (TOTAL_IMPACT_END_SCREEN_COORDS), "Total Impact", 35)
+    
+    #First Row of Info
+    drawText(screen, (TOTAL_IMPACT_END_SCREEN_COORDS[0] - 130, TOTAL_IMPACT_END_SCREEN_COORDS[1] + 45), "Calories: " + displayTotalCalories, 20)
+    drawText(screen, (TOTAL_IMPACT_END_SCREEN_COORDS[0] + 50, TOTAL_IMPACT_END_SCREEN_COORDS[1] + 45), "Weight: " + displayTotalWieght, 20)
+    drawText(screen, (TOTAL_IMPACT_END_SCREEN_COORDS[0] + 200, TOTAL_IMPACT_END_SCREEN_COORDS[1] + 45), "Carbs: " + displayTotalCarbs, 20)
+
+    #Second Row of Info
+    
+    drawText(screen, (TOTAL_IMPACT_END_SCREEN_COORDS[0] - 50, TOTAL_IMPACT_END_SCREEN_COORDS[1] + 75), "Protein: " + displayTotalProtein, 20)
+    drawText(screen, (TOTAL_IMPACT_END_SCREEN_COORDS[0] + 150, TOTAL_IMPACT_END_SCREEN_COORDS[1] + 75), "Fat: " + displayTotalFat, 20)
+
 #Ordered: quanitity per plant, wieght per item (grams), carbs per item (grams), protein per item(grams), fat per item(grams), calories per item
-#weeks until grown, seeds per row, is it a fruit plant, is it a special plant?
+#weeks until grown, seeds per row, is it a fruit plant, is it a special plant?, what color is the fruit?
 vegetableInfoDictionary = {
 "Vegetable": [0, 0, 0, 0, 0, 0, 0, 0, False, False, growingStageColor], "Bellpepper":  [7, 400, 24, 4, 1.2, 124, 13, 24, True, False, bellpepperColor], "Tomato" : [16, 900, 35.1, 8.1, 1.8, 162, 10, 24, True, False, tomatoColor], 
 "Potato" : [6, 200, 40.1, 3.8, 0.2, 174, 13, 36, False, False, potatoColor], "Carrot" : [1, 61, 5.856, 0.549, 0.122, 25, 10, 100, False, False, carrotColor], "Onion" : [1, 110, 10, 1.2, 0.1, 44, 14, 36, False, True, onionColor], 
-"Corn" : [4, 90, 17, 2.9, 1.1, 77, 10, 54, False, True, cornColor], "Broccoli" : [3, 221, 15.47, 6.19, 0.884, 75.14, 10, 12, False, False, broccoliColor], "Eggplant" : [5, 548, 32, 5, 1, 136, 10, 54, True, False, eggplantColor]
+"Corn" : [4, 90, 17, 2.9, 1.1, 77, 10, 54, False, True, cornColor], "Broccoli" : [3, 221, 15.47, 6.19, 0.884, 75.14, 10, 12, True, False, vineColor], "Eggplant" : [5, 548, 32, 5, 1, 136, 10, 54, True, False, eggplantColor]
+}
+
+explainationDictionary = {
+"Instructions" : " The objective is to maximize the impact of the farm onto the food insecure. You can determine if that simply means calories, pounds of produce, or nutritionally complete meals. To grow the crops, click and hold a row until you have fertilized, tilled, irrigated, and seeded the rows. You have eight crop types to choose from. Every vegetable has unique characteristics, and you can choose to plant a variety of crops or just produce only your favorite. You can harvest the crops by clicking on the row (A plant harvestable when the color is bluer, or it shows fruits). The season is only 26 weeks, so choose your plants wisely!", 
+"Slot Help" : " Note: Click the vegetable to select the vegetable.",
+"Vegetable Nutrients Facts Help" : " Note: These nutritional facts represent one vegetable, not the entire row, and the amount of food you harvest depends on the number of crops that fit into the row (each row is about 36 ft x 6 ft).",
+"Next Week Help" : " Note: Click the button to go to the next week."
+
 }
 
 def drawSelectedVegetableOptions(vegetable = "Vegetable"):
@@ -622,16 +757,20 @@ def drawSelectedVegetableOptions(vegetable = "Vegetable"):
 
     nutritionalFacts = vegetableInfoDictionary[vegetable]
     #Draws title
-    drawText(screen, (1000, 100), vegetable + " Nutrients", 35)
+    drawText(screen, SELECTED_VEGETABLE_OPTIONS_COORDS, vegetable + " Nutrients", 35, getWidth = True)
     
-    #First Row of Info
-    drawText(screen, (1000, 140), "Calories: " + str(round(nutritionalFacts[5], 1)), 20) 
-    drawText(screen, (1150, 140), "Weight: " + str(round(nutritionalFacts[1], 1)) + "g", 20)
+    #First Row of info
+    drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0], SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 40), "Calories: " + str(round(nutritionalFacts[5], 1)), 20) 
+    drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0] + 150, SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 40), "Weight: " + str(round(nutritionalFacts[1], 1)) + "g", 20)
 
-    #Second Row of Info
-    drawText(screen, (1000, 170), "Carbs: " + str(round(nutritionalFacts[2], 1)) + "g" , 20)
-    drawText(screen, (1150, 170), "Protein: " + str(round(nutritionalFacts[3], 1)) + "g", 20)
-    drawText(screen, (1300, 170), "Fat: " + str(round(nutritionalFacts[4], 1)) + "g", 20)
+    #Second Row of info
+    drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0], SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 70), "Carbs: " + str(round(nutritionalFacts[2], 1)) + "g" , 20)
+    drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0] + 150, SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 70), "Protein: " + str(round(nutritionalFacts[3], 1)) + "g", 20)
+    drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0] + 300, SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 70), "Fat: " + str(round(nutritionalFacts[4], 1)) + "g", 20)
+
+    #Third Row of info
+    drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0], SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 100), "Gestation: " + str(nutritionalFacts[6]) + " weeks", 20)
+    drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0] + 210, SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 100), str(nutritionalFacts[7] * 2) + " plants per row", 20)
 
 def drawTotalImpact(vegetable = "Vegetable"):
     global totalCalories, totalWieght, totalCarbs, totalProtein, totalFat
@@ -668,26 +807,73 @@ def drawTotalImpact(vegetable = "Vegetable"):
         displayTotalFat = readableText(int(totalFat))  + "g"
 
     #Draws title
-    drawText(screen, (1000, 200), "Total Impact", 35)
+    drawText(screen, (TOTAL_IMPACT_COORDS), "Total Impact", 35)
     
     #First Row of Info
-    drawText(screen, (1000, 250), "Calories: " + displayTotalCalories, 20)
-    drawText(screen, (1000, 270), "Weight: " + displayTotalWieght, 20)
+    drawText(screen, (TOTAL_IMPACT_COORDS[0], TOTAL_IMPACT_COORDS[1] + 45), "Calories: " + displayTotalCalories, 20)
+    drawText(screen, (TOTAL_IMPACT_COORDS[0], TOTAL_IMPACT_COORDS[1] + 65), "Weight: " + displayTotalWieght, 20)
 
     #Second Row of Info
-    drawText(screen, (1000, 290), "Carbs: " + displayTotalCarbs, 20)
-    drawText(screen, (1000, 310), "Protein: " + displayTotalProtein, 20)
-    drawText(screen, (1000, 330), "Fat: " + displayTotalFat, 20)
+    drawText(screen, (TOTAL_IMPACT_COORDS[0], TOTAL_IMPACT_COORDS[1] + 85), "Carbs: " + displayTotalCarbs, 20)
+    drawText(screen, (TOTAL_IMPACT_COORDS[0], TOTAL_IMPACT_COORDS[1] + 105), "Protein: " + displayTotalProtein, 20)
+    drawText(screen, (TOTAL_IMPACT_COORDS[0], TOTAL_IMPACT_COORDS[1] + 125), "Fat: " + displayTotalFat, 20)
+
+def drawInstructions():
+
+    explaination = explainationDictionary["Instructions"]
+    
+    #Title
+    drawText(screen, EXPLAINATION_COORDS, "Instructions", 40)
+
+    #Body
+    autoTextBreak(explaination, (EXPLAINATION_COORDS[0], EXPLAINATION_COORDS[1] + 40))
+
+def drawHelpxplaination(type, coords):
+
+    explaination = explainationDictionary[type]
+
+    #Body
+    autoTextBreak(explaination, (coords[0], coords[1]))
 
 startup()
 
-'''====================================main game loop===================================='''
+'''==================================== Main Game Loop ===================================='''
 while running:
 
-    '''Quit Condition'''
-    closeWindow()
+    for event in pg.event.get():
+        if event.type == pg.MOUSEBUTTONUP:
+            '''Next Week Button'''
+            if nextWeekButton.isMouseInPositionInButton():
+                nextWeekButtonHandler()
+            
+            elif vegetableOptionsHelpButton.isMouseInPositionInButton():
+                '''Help Buttons'''
 
-    '''Handles mouse events'''
+                #Clears current info
+                pg.draw.rect(screen, gravelColor, [helpInfoCoord[0], helpInfoCoord[1], 400, 80])
+
+                #Draws new info
+                drawHelpxplaination("Slot Help", helpInfoCoord)
+
+            elif vegetableNutritionHelpButton.isMouseInPositionInButton():
+                #Clears current info
+                pg.draw.rect(screen, gravelColor, [helpInfoCoord[0], helpInfoCoord[1], 400, 80])
+
+                #Draws new info
+                drawHelpxplaination("Vegetable Nutrients Facts Help", helpInfoCoord)
+
+            elif nextWeekHelpButton.isMouseInPositionInButton():
+                #Clears current info
+                pg.draw.rect(screen, gravelColor, [helpInfoCoord[0], helpInfoCoord[1], 400, 80])
+
+                #Draws new info
+                drawHelpxplaination("Next Week Help", helpInfoCoord)
+
+        elif event.type == pg.QUIT:
+            '''If the player clicks on the X Buttom'''
+            closeWindow()
+
+    '''If the button is held down'''
     if pg.mouse.get_pressed(3)[0]:
         clickedOnRow = returnRowNumber()
 
@@ -698,10 +884,15 @@ while running:
             
             currentRow = rows[clickedOnRow]
 
-            print (currentRow)
+            #Clarity Variables
+            ageOfTheCrops = currentRow[2]
+            vegetablePlantedInRow = currentRow[3]
+            stagesOfDevelopment = currentRow[4]
+
+            timeTillHarvestable = vegetableInfoDictionary[vegetablePlantedInRow][6]
 
             #Adds the number of "clicks" to the row information
-            currentRow[1] = currentRow[1] + 1
+            currentRow[1] = currentRow[1] + 1 # currentRow[1] is the number of clicks in the row
 
             '''
             These are in drawing order not stage order
@@ -711,36 +902,34 @@ while running:
             Stage 4 (Seed): 26 - 38
             '''
 
-            #print (currentRow[4])
-
             #First Stage - Fertilizes the seeds 
-            if currentRow[4] == [False, False, False, False, False]:
+            if stagesOfDevelopment == [False, False, False, False, False]:
 
-                #Fertilizes for every click upto 12
+                #Fertilizes for every click up to 12
                 for fertilizedPlaces in range (currentRow[1]):
                     fertilize(clickedOnRow, fertilizedPlaces)
             
             #Second Stage - Tills the land
-            elif currentRow[4] == [True, False, False, False, False]:
+            elif stagesOfDevelopment == [True, False, False, False, False]:
                 till(clickedOnRow)
 
             #Third Stage - Irrigate the row
-            elif currentRow[4] == [True, True, False, False, False]:
+            elif stagesOfDevelopment == [True, True, False, False, False]:
                 irrigate (clickedOnRow)
             
             #Fourth Stage - Plants the seeds
-            elif currentRow[4] == [True, True, True, False, False] and not selectedVegetable == "Vegetable":
-                
-                #Sets the row vegetable
-                currentRow[3] = selectedVegetable
+            elif stagesOfDevelopment == [True, True, True, False, False] and not selectedVegetable == "Vegetable":
+
+                #If it is the first time seeding, then add the selected vegetable to row information
+                if currentRow[1] == SEEDING_STAGE_LOWER_LIMIT:
+                    currentRow[3] = selectedVegetable
 
                 #Seeds the area in stages
                 for seedPlaces in range (currentRow[1] - SEEDING_STAGE_LOWER_LIMIT):
-                    seed(clickedOnRow, selectedVegetable, seedPlaces)
+                    seed(clickedOnRow, currentRow[3], seedPlaces)
                 
             #Fifth Stage - Harvest the row
-
-            elif currentRow[2] >= 2 and currentRow[4] == [True, True, True, True, False] :
+            elif ageOfTheCrops >= timeTillHarvestable and stagesOfDevelopment == [True, True, True, True, False]:
                 
                 temp = currentRow[3]
 
@@ -748,7 +937,7 @@ while running:
                 clearRow(clickedOnRow)
 
                 #Clears SelectedVegetableOptions and draws a new set
-                pg.draw.rect(screen, gravelColor, [1000, 200, 400, 350])
+                pg.draw.rect(screen, gravelColor, [TOTAL_IMPACT_COORDS[0], TOTAL_IMPACT_COORDS[1], 400, 145])
                 #print (currentRow)
                 drawTotalImpact(temp)
 
@@ -777,73 +966,17 @@ while running:
                     selectedVegetable = slot[2]
 
                     #Clears SelectedVegetableOptions and draws a new set
-                    pg.draw.rect(screen, gravelColor, [1000, 100, 400, 100])
+                    pg.draw.rect(screen, gravelColor, [SELECTED_VEGETABLE_OPTIONS_COORDS[0], SELECTED_VEGETABLE_OPTIONS_COORDS[1], 400, 130])
                     drawSelectedVegetableOptions(selectedVegetable)
-
-        # If nextWeekButton is pressed
-        elif nextWeekButton.isMouseInPositionInButton():
-            
-            #increments weeks 
-            week = week + 1
-            pg.draw.rect(screen, gravelColor, pg.Rect(990, 690, 500, 30), 0)
-            drawText (screen, (1045, 690), "Season End: " + str(TIME_TO_END - week) + " weeks", 30) #screen, topLeftPosition, text, textSize
-
-            if TIME_TO_END - week == 1:
-                pg.draw.rect(screen, gravelColor, pg.Rect(990, 690, 500, 30), 0)
-                drawText (screen, (1045, 690), "Season End: " + str(TIME_TO_END - week) + " week", 30) #screen, topLeftPosition, text, textSize
-
-
-            #print (rows)
-            
-            '''
-            unseeded - 0
-            seeded - 1 week
-            first growth stage - 2 week
-            second growth stage - 3 - 12 weeks
-            Ready to havest - after 13 weeks
-            '''
-            #increment all seeded plots if seeded
-            for row in rows:
-                if not row[2] == 0:
-                    row[2] = row[2] + 1
-            
-            '''Handles time increments changes'''
-            for row in rows:
-                plantInfo = vegetableInfoDictionary[row[3]]
-
-                weeksUntilPlantIsGrown = plantInfo[6] + 2
-                isSpecial = plantInfo[9]
-                
-                if row[2] == 2:
-                    
-                    seedingStageUpperLimit = row[5]
-                    
-
-                    #Brute-force fix for a bug
-                    if row[1] <= seedingStageUpperLimit:
-                        row[1] = seedingStageUpperLimit
-
-                    sprout(row)
-
-                elif row[2] > 2 and row[2] < weeksUntilPlantIsGrown and not isSpecial:
-
-                    bushyPlantGrowth(row)
-                
-                elif row[2] > 2 and row[2] < weeksUntilPlantIsGrown and isSpecial:
-
-                    stalkyPlantGrowth(row)
-
-                elif row[2] == weeksUntilPlantIsGrown:
-                    
-                    readyToHarvest(row)
-
-    #print(pg.mouse.get_pos())
+                    vegetableNutritionHelpButton = Button((SELECTED_VEGETABLE_OPTIONS_COORDS[0] + textWidth + 2, SELECTED_VEGETABLE_OPTIONS_COORDS[1]), screen, "[?]", 15, (SELECTED_VEGETABLE_OPTIONS_COORDS[0] + textWidth - 3, SELECTED_VEGETABLE_OPTIONS_COORDS[1] - 5), 30, 30)
 
     createSigns ()
 
     '''End Condition And End Screen'''
-    if week >= TIME_TO_END:
+    if week > TIME_TO_END:
         endScreen()
+
+    #print (pg.mouse.get_pos())
 
     '''Updates the window'''
     pg.display.flip()
