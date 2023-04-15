@@ -80,7 +80,7 @@ totalFat = 0
 #In-the-background constants
 NUMBER_OF_PLANTS_PER_ROW = 12
 TIME_TO_END = 26
-ROW_HEIGHT = 745
+ROW_HEIGHT = 717
 
 #Staging constants
 FERTILIZE_STAGE = 12
@@ -364,7 +364,7 @@ def clearRow(clickedOnRow):
     #colors over the plants
     readyToHarvest(currentRow, gravelColor, True)
 
-    pg.draw.rect(screen, gravelColor, pg.Rect(currentRow[0][0],  currentRow[0][1] - 20, 120, 780), 0)
+    pg.draw.rect(screen, gravelColor, pg.Rect(currentRow[0][0]-20,  currentRow[0][1] - 20, 150, 780), 0)
 
     #creates a new row
     pg.draw.rect(screen, rowColor, pg.Rect(currentRow[0][0],  currentRow[0][1], 120, 765), 0)
@@ -448,7 +448,7 @@ def nextWeekButtonHandler():
 
         plantInfo = vegetableInfoDictionary[row[3]]
 
-        weeksUntilPlantIsGrown = plantInfo[6] + 1
+        weeksUntilPlantIsGrown = plantInfo[6]
 
         if row[2] == 2:
             sprout(row)
@@ -526,13 +526,13 @@ def plantGrowth(row, color = growingStageColor):
     #Regular Plants (bushy and fruit)
     if not special: #LOL
 
-        growthRate = 50/numberOfWeeksOfGrowth
+        growthRate = 38/numberOfWeeksOfGrowth
 
         for plant in range(numberOfPlantsPerRow):
 
             seedPlacementY = int(row[0][1] + plant * spacing + 10) #The row starts at y: 20 and ends at 765
 
-            #Max is 50 radius min is 5
+            #Max is 40 radius min is 5
             pg.draw.circle(screen, color, (row[0][0] + 33, seedPlacementY), round(growthRate*(week-1)))
             pg.draw.circle(screen, color, (row[0][0] + 84, seedPlacementY), round(growthRate*(week-1)))
 
@@ -545,7 +545,7 @@ def plantGrowth(row, color = growingStageColor):
 
             seedPlacementY = int(row[0][1] + plant * spacing + 10) #The row starts at y: 20 and ends at 765
 
-            #Max is 50 radius min is 5
+            #Max is 12 radius min is 5
             pg.draw.circle(screen, color, (row[0][0] + 33, seedPlacementY), round(growthRate*(week-1)))
             pg.draw.circle(screen, color, (row[0][0] + 84, seedPlacementY), round(growthRate*(week-1)))
 
@@ -553,21 +553,28 @@ def plantGrowth(row, color = growingStageColor):
     #Special Plant Corn
     elif vegetable == "Corn":
 
-        growthRate = 36/numberOfWeeksOfGrowth
+        growthRate = 38/numberOfWeeksOfGrowth
 
         for plant in range(numberOfPlantsPerRow):
 
             seedPlacementY = int(row[0][1] + plant * spacing - 5) #The row starts at y: 20 and ends at 765
             
+            if week > numberOfWeeksOfGrowth:
+                week = numberOfWeeksOfGrowth
+
             pg.draw.ellipse(screen, color, [row[0][0] + 33 - round(growthRate*(week-1) * 1/2), seedPlacementY, round(growthRate*(week-1)), (growthRate*(week-1) * 3/4)])
             pg.draw.ellipse(screen, color, [row[0][0] + 84 - round(growthRate*(week-1) * 1/2), seedPlacementY, round(growthRate*(week-1)), (growthRate*(week-1) * 3/4)])
-           
+
 def readyToHarvest(row, bushColor = readyToHarvestColor, clear = False):
 
     plantInfo = vegetableInfoDictionary[row[3]]
     numberOfPlantsPerRow = plantInfo[7]
     
-    spacing = (ROW_HEIGHT) / numberOfPlantsPerRow
+    #Bug Brute Force Fixes
+    if numberOfPlantsPerRow != 0:
+        spacing = ROW_HEIGHT / numberOfPlantsPerRow
+    else:
+        spacing = 0
 
     producesFruit = plantInfo[8]
     isSpecial = plantInfo[9]
@@ -583,8 +590,8 @@ def readyToHarvest(row, bushColor = readyToHarvestColor, clear = False):
             plantPlacementY = int(row[0][1] + plant * spacing + 10) #The row starts at y: 20 and ends at 765
 
             #Max is 50 radius min is 5
-            pg.draw.circle(screen, bushColor, (row[0][0] + 33, plantPlacementY), 52)
-            pg.draw.circle(screen, bushColor, (row[0][0] + 84, plantPlacementY), 52)
+            pg.draw.circle(screen, bushColor, (row[0][0] + 33, plantPlacementY), 40)
+            pg.draw.circle(screen, bushColor, (row[0][0] + 84, plantPlacementY), 40)
 
         #Then Draws a layer of "Fruit"
 
@@ -632,8 +639,8 @@ def readyToHarvest(row, bushColor = readyToHarvestColor, clear = False):
             plantPlacementY = int(row[0][1] + plant * spacing + 10) #The row starts at y: 20 and ends at 765
 
             #Max is 50 radius min is 5
-            pg.draw.circle(screen, bushColor, (row[0][0] + 33, plantPlacementY), 53)
-            pg.draw.circle(screen, bushColor, (row[0][0] + 84, plantPlacementY), 53)
+            pg.draw.circle(screen, bushColor, (row[0][0] + 33, plantPlacementY), 40)
+            pg.draw.circle(screen, bushColor, (row[0][0] + 84, plantPlacementY), 40)
 
 def drawTomato (center):
 
@@ -738,9 +745,9 @@ def drawTotalImpactEndScreen ():
 #Ordered: quanitity per plant, wieght per item (grams), carbs per item (grams), protein per item(grams), fat per item(grams), calories per item
 #weeks until grown, seeds per row, is it a fruit plant, is it a special plant?, what color is the fruit?
 vegetableInfoDictionary = {
-"Vegetable": [0, 0, 0, 0, 0, 0, 0, 0, False, False, growingStageColor], "Bellpepper":  [7, 400, 24, 4, 1.2, 124, 13, 24, True, False, bellpepperColor], "Tomato" : [16, 900, 35.1, 8.1, 1.8, 162, 10, 24, True, False, tomatoColor], 
-"Potato" : [6, 200, 40.1, 3.8, 0.2, 174, 13, 36, False, False, potatoColor], "Carrot" : [1, 61, 5.856, 0.549, 0.122, 25, 10, 100, False, False, carrotColor], "Onion" : [1, 110, 10, 1.2, 0.1, 44, 14, 36, False, True, onionColor], 
-"Corn" : [4, 90, 17, 2.9, 1.1, 77, 10, 54, False, True, cornColor], "Broccoli" : [3, 221, 15.47, 6.19, 0.884, 75.14, 10, 12, True, False, vineColor], "Eggplant" : [5, 548, 32, 5, 1, 136, 10, 54, True, False, eggplantColor]
+"Vegetable": [0, 0, 0, 0, 0, 0, 0, 0, False, False, growingStageColor], "Bellpepper":  [7, 400, 24, 4, 1.2, 124, 14, 24, True, False, bellpepperColor], "Tomato" : [16, 900, 35.1, 8.1, 1.8, 162, 11, 24, True, False, tomatoColor], 
+"Potato" : [6, 200, 40.1, 3.8, 0.2, 174, 14, 36, False, False, potatoColor], "Carrot" : [1, 61, 5.856, 0.549, 0.122, 25, 11, 120, False, False, carrotColor], "Onion" : [1, 110, 10, 1.2, 0.1, 44, 15, 36, False, True, onionColor], 
+"Corn" : [4, 90, 17, 2.9, 1.1, 77, 11, 54, False, True, cornColor], "Broccoli" : [3, 221, 15.47, 6.19, 0.884, 75.14, 11, 12, True, False, vineColor], "Eggplant" : [5, 548, 32, 5, 1, 136, 11, 54, True, False, eggplantColor]
 }
 
 explainationDictionary = {
@@ -769,7 +776,7 @@ def drawSelectedVegetableOptions(vegetable = "Vegetable"):
     drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0] + 300, SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 70), "Fat: " + str(round(nutritionalFacts[4], 1)) + "g", 20)
 
     #Third Row of info
-    drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0], SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 100), "Gestation: " + str(nutritionalFacts[6]) + " weeks", 20)
+    drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0], SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 100), "Gestation: " + str(nutritionalFacts[6] - 1) + " weeks", 20)
     drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0] + 210, SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 100), str(nutritionalFacts[7] * 2) + " plants per row", 20)
 
 def drawTotalImpact(vegetable = "Vegetable"):
@@ -845,6 +852,7 @@ while running:
             '''Next Week Button'''
             if nextWeekButton.isMouseInPositionInButton():
                 nextWeekButtonHandler()
+                print (rows)
             
             elif vegetableOptionsHelpButton.isMouseInPositionInButton():
                 '''Help Buttons'''
