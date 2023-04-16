@@ -97,12 +97,29 @@ VEGETABLE_OPTIONS_COORDS = (1000, 0)
 SELECTED_VEGETABLE_OPTIONS_COORDS = (VEGETABLE_OPTIONS_COORDS[0], VEGETABLE_OPTIONS_COORDS[1] + 100)
 TOTAL_IMPACT_COORDS = (SELECTED_VEGETABLE_OPTIONS_COORDS[0], SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 130)
 EXPLAINATION_COORDS = (TOTAL_IMPACT_COORDS[0], TOTAL_IMPACT_COORDS[1] + 150)
-
 TOTAL_IMPACT_END_SCREEN_COORDS = (650, 420)
+
+'''Vegetable Dictionaries'''
+#Ordered: quanitity per plant, wieght per item (grams), carbs per item (grams), protein per item(grams), fat per item(grams), calories per item
+#weeks until grown, seeds per row, is it a fruit plant, is it a special plant?, what color is the fruit?
+vegetableInfoDictionary = {
+"Vegetable": [0, 0, 0, 0, 0, 0, 0, 0, False, False, growingStageColor], "Bellpepper":  [7, 400, 24, 4, 1.2, 124, 14, 24, True, False, bellpepperColor], "Tomato" : [16, 900, 35.1, 8.1, 1.8, 162, 11, 24, True, False, tomatoColor], 
+"Potato" : [6, 200, 40.1, 3.8, 0.2, 174, 14, 36, False, False, potatoColor], "Carrot" : [1, 61, 5.856, 0.549, 0.122, 25, 11, 120, False, False, carrotColor], "Onion" : [1, 110, 10, 1.2, 0.1, 44, 15, 36, False, True, onionColor], 
+"Corn" : [4, 90, 17, 2.9, 1.1, 77, 11, 54, False, True, cornColor], "Broccoli" : [3, 221, 15.47, 6.19, 0.884, 75.14, 11, 12, True, False, vineColor], "Eggplant" : [5, 548, 32, 5, 1, 136, 11, 54, True, False, eggplantColor]
+}
+
+explainationDictionary = {
+"Instructions" : " The objective is to maximize the impact of the farm onto the food insecure. You can determine if that simply means calories, pounds of produce, or nutritionally complete meals. To grow the crops, click and hold a row until you have fertilized, tilled, irrigated, and seeded the rows. You have eight crop types to choose from. Every vegetable has unique characteristics, and you can choose to plant a variety of crops or just produce only your favorite. You can harvest the crops by clicking on the row (A plant harvestable when the color is bluer, or it shows fruits). The season is only 26 weeks, so choose your plants wisely!", 
+"Slot Help" : " Note: Click the vegetable to select the vegetable.",
+"Vegetable Nutrients Facts Help" : " Note: These nutritional facts represent one vegetable, not the entire row, and the amount of food you harvest depends on the number of crops that fit into the row (each row is about 36 ft x 6 ft).",
+"Next Week Help" : " Note: Click the button to go to the next week."
+
+}
 
 running = True
 
 '''General Functions'''
+'''Makes a Button :)'''
 class Button:
     def __init__(self, buttonPositionTopLeft, screen, text, textSize, hitboxTopLeft, hitboxLength, hitboxHitWidth, showHitBox = False, showBackground = False, backgroundColor = white):
         '''Display Variables'''
@@ -146,6 +163,7 @@ class Button:
     def isMouseInPositionInButton(self):
         return isMouseInPositionOverButton(self.hitboxTopLeft, self.buttonWidth, self.buttonHeight)
 
+'''Returns True or False if the mouse is over the coordinates'''
 def isMouseInPositionOverButton(buttonPositionTopLeft, width, height):
         #Get postion of bottom-right limits in (x, y) format
         buttonPositionBottomRight  = (buttonPositionTopLeft[0] + width, buttonPositionTopLeft[1] + height)
@@ -165,6 +183,7 @@ def isMouseInPositionOverButton(buttonPositionTopLeft, width, height):
         #print ("Mouse over button!")
         return True
 
+'''Draws Text from a string'''
 def drawText (screen, topLeftPosition, text, textSize, drawRect = False, showInfo = False, getWidth = False):
     global textWidth
 
@@ -183,6 +202,7 @@ def drawText (screen, topLeftPosition, text, textSize, drawRect = False, showInf
 
     screen.blit(img, topLeftPosition)
 
+'''Adds commas to large numbers to make them readable and can convert grams to Kilograms'''
 def readableText(rawText, convertgTokg = False):
 
     if convertgTokg:
@@ -203,12 +223,14 @@ def readableText(rawText, convertgTokg = False):
 
     return finalText
 
+'''Shuts off main loop and exits the program'''
 def closeWindow():
     global running
     
     running = False
     quit()
 
+'''Using the drawText Function, this function can draw 'paragraphs' 55 characters long'''
 def autoTextBreak (text, coords, maxCharacters = 55, characterSize = 14):
 
     oldSpaceIteration = 0
@@ -240,7 +262,7 @@ def autoTextBreak (text, coords, maxCharacters = 55, characterSize = 14):
 
             break
 
-'''-----------------------------------Graphics-----------------------------------'''
+'''-----------------------------------Key Functions-----------------------------------'''
 
 def createRows ():
     rowWidth = int((width-420)/len(rows))
@@ -459,6 +481,8 @@ def nextWeekButtonHandler():
         elif row[2] == weeksUntilPlantIsGrown:
             readyToHarvest(row)
 
+'''-----------------------------------Quasi-Graphical Functions-----------------------------------'''
+
 def fertilize(clickedRow, fertilizeIteration):
     
     pg.draw.rect(screen, fertilizeColor, pg.Rect(rows[clickedRow][0][0], rows[clickedRow][0][1]+ fertilizeIteration * 62, 120, 83), 0)
@@ -642,48 +666,54 @@ def readyToHarvest(row, bushColor = readyToHarvestColor, clear = False):
             pg.draw.circle(screen, bushColor, (row[0][0] + 33, plantPlacementY), 40)
             pg.draw.circle(screen, bushColor, (row[0][0] + 84, plantPlacementY), 40)
 
-def drawTomato (center):
+'''-----------------------------------Graphics-----------------------------------'''
 
+'''Draws a Tomato'''
+def drawTomato (center):
     pg.draw.rect(screen, vineColor, pg.Rect(center[0] - 3, center[1]- 15, 6, 20), 0)
     pg.draw.circle(screen, tomatoColor, center, 10, 0)
 
+'''Draws a Bell Pepper'''
 def drawBellPepper (topLeft):
-
     pg.draw.rect(screen, vineColor, pg.Rect(topLeft[0] + 12, topLeft[1], 5, 10), 0)
     pg.draw.rect(screen, bellpepperColor, pg.Rect(topLeft[0], topLeft[1] + 10, 10, 30), 0, border_radius=4)
     pg.draw.rect(screen, bellpepperColor, pg.Rect(topLeft[0] + 10, topLeft[1] + 10, 10, 30), 0, border_radius=4)
     pg.draw.rect(screen, bellpepperColor, pg.Rect(topLeft[0] + 20, topLeft[1] + 10, 10, 30), 0, border_radius=4)
 
+'''Draws a Potato'''
 def drawPotato (topLeft):
-
     pg.draw.rect(screen, potatoColor, pg.Rect(topLeft[0], topLeft[1], 25, 40), 0, border_radius=13)
 
+'''Draws a Carrot'''
 def drawCarrot(topLeft):
     pg.draw.polygon(screen, vineColor, [(topLeft[0] + 15, topLeft[1] + 10), (topLeft[0] + 30, topLeft[1] + 10), (topLeft[0] + 25, topLeft[1] + 30)])
     pg.draw.polygon(screen, carrotColor, [(topLeft[0] + 10, topLeft[1] + 20), (topLeft[0] + 35, topLeft[1] + 20), (topLeft[0] + 23, topLeft[1] + 50)])
 
+'''Draws a Corn'''
 def drawCorn (topLeft):
     pg.draw.rect(screen, cornColor, pg.Rect(topLeft[0], topLeft[1], 20, 40), 0, border_radius=13)
     
     pg.draw.polygon(screen, vineColor, [(topLeft[0] - 5, topLeft[1] + 15), (topLeft[0] - 5, topLeft[1] + 40), (topLeft[0] + 12, topLeft[1] + 40)])
     pg.draw.polygon(screen, vineColor, [(topLeft[0] + 25, topLeft[1] + 15), (topLeft[0] + 25, topLeft[1] + 40), (topLeft[0] + 8, topLeft[1] + 40)])
 
+'''Draws a Onion'''
 def drawOnion (center):
-
     pg.draw.circle(screen, onionColor, center, 10, 0)
     pg.draw.polygon(screen, onionColor, [(center[0] - 9, center[1]), (center[0] + 8, center[1]), (center[0], center[1] - 17)])
-    #pg.draw.polygon(screen, onionColor, [(center[0] - 8, center[1]), (center[0] + 8, center[1]), (center[0] - 5, center[1] - 15)])
-
+    
+'''Draws a Broccoli'''
 def drawBroccoli(topLeft):
     pg.draw.rect(screen, vineColor, [topLeft[0] + 20, topLeft[1] + 20, 10, 15])
     pg.draw.rect(screen, broccoliColor, [topLeft[0] + 10, topLeft[1] + 10, 30, 15], border_radius=10)
 
+'''Draws a Eggplant'''
 def drawEggplant(center):
 
     pg.draw.rect(screen, broccoliColor, [center[0] - 3, center[1] - 13, 5, 10])
     pg.draw.circle(screen, eggplantColor, (center[0], center[1] + 10), 12, 0)
     pg.draw.circle(screen, eggplantColor, center, 9, 0)
 
+'''Draws the vegetables on the row signs'''
 def drawPlantsSwitch (plant, clickedRow):
     
     if plant == "Tomato":
@@ -705,6 +735,7 @@ def drawPlantsSwitch (plant, clickedRow):
     else: 
         print ("Error!")
 
+'''Draws the UI Element: Total Impact for the end screen (creates it in the middle instead of the right side)'''
 def drawTotalImpactEndScreen ():
 
     displayTotalCalories = readableText(int(totalCalories))
@@ -742,22 +773,7 @@ def drawTotalImpactEndScreen ():
     drawText(screen, (TOTAL_IMPACT_END_SCREEN_COORDS[0] - 50, TOTAL_IMPACT_END_SCREEN_COORDS[1] + 75), "Protein: " + displayTotalProtein, 20)
     drawText(screen, (TOTAL_IMPACT_END_SCREEN_COORDS[0] + 150, TOTAL_IMPACT_END_SCREEN_COORDS[1] + 75), "Fat: " + displayTotalFat, 20)
 
-#Ordered: quanitity per plant, wieght per item (grams), carbs per item (grams), protein per item(grams), fat per item(grams), calories per item
-#weeks until grown, seeds per row, is it a fruit plant, is it a special plant?, what color is the fruit?
-vegetableInfoDictionary = {
-"Vegetable": [0, 0, 0, 0, 0, 0, 0, 0, False, False, growingStageColor], "Bellpepper":  [7, 400, 24, 4, 1.2, 124, 14, 24, True, False, bellpepperColor], "Tomato" : [16, 900, 35.1, 8.1, 1.8, 162, 11, 24, True, False, tomatoColor], 
-"Potato" : [6, 200, 40.1, 3.8, 0.2, 174, 14, 36, False, False, potatoColor], "Carrot" : [1, 61, 5.856, 0.549, 0.122, 25, 11, 120, False, False, carrotColor], "Onion" : [1, 110, 10, 1.2, 0.1, 44, 15, 36, False, True, onionColor], 
-"Corn" : [4, 90, 17, 2.9, 1.1, 77, 11, 54, False, True, cornColor], "Broccoli" : [3, 221, 15.47, 6.19, 0.884, 75.14, 11, 12, True, False, vineColor], "Eggplant" : [5, 548, 32, 5, 1, 136, 11, 54, True, False, eggplantColor]
-}
-
-explainationDictionary = {
-"Instructions" : " The objective is to maximize the impact of the farm onto the food insecure. You can determine if that simply means calories, pounds of produce, or nutritionally complete meals. To grow the crops, click and hold a row until you have fertilized, tilled, irrigated, and seeded the rows. You have eight crop types to choose from. Every vegetable has unique characteristics, and you can choose to plant a variety of crops or just produce only your favorite. You can harvest the crops by clicking on the row (A plant harvestable when the color is bluer, or it shows fruits). The season is only 26 weeks, so choose your plants wisely!", 
-"Slot Help" : " Note: Click the vegetable to select the vegetable.",
-"Vegetable Nutrients Facts Help" : " Note: These nutritional facts represent one vegetable, not the entire row, and the amount of food you harvest depends on the number of crops that fit into the row (each row is about 36 ft x 6 ft).",
-"Next Week Help" : " Note: Click the button to go to the next week."
-
-}
-
+'''Draws the UI Element: Vegetable Nutrients'''
 def drawSelectedVegetableOptions(vegetable = "Vegetable"):
 
     #print (vegetable)
@@ -779,6 +795,7 @@ def drawSelectedVegetableOptions(vegetable = "Vegetable"):
     drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0], SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 100), "Gestation: " + str(nutritionalFacts[6] - 1) + " weeks", 20)
     drawText(screen, (SELECTED_VEGETABLE_OPTIONS_COORDS[0] + 210, SELECTED_VEGETABLE_OPTIONS_COORDS[1] + 100), str(nutritionalFacts[7] * 2) + " plants per row", 20)
 
+'''Draws the UI Element: Total Impact and handles total impact calculations'''
 def drawTotalImpact(vegetable = "Vegetable"):
     global totalCalories, totalWieght, totalCarbs, totalProtein, totalFat
 
@@ -789,7 +806,6 @@ def drawTotalImpact(vegetable = "Vegetable"):
     totalCarbs = totalCarbs + nutritionalFacts[2] * NUMBER_OF_PLANTS_PER_ROW
     totalProtein = totalProtein + nutritionalFacts[3] * NUMBER_OF_PLANTS_PER_ROW
     totalFat = totalFat + nutritionalFacts[4]* NUMBER_OF_PLANTS_PER_ROW
-    
     
     displayTotalCalories = readableText(int(totalCalories))
 
@@ -825,6 +841,7 @@ def drawTotalImpact(vegetable = "Vegetable"):
     drawText(screen, (TOTAL_IMPACT_COORDS[0], TOTAL_IMPACT_COORDS[1] + 105), "Protein: " + displayTotalProtein, 20)
     drawText(screen, (TOTAL_IMPACT_COORDS[0], TOTAL_IMPACT_COORDS[1] + 125), "Fat: " + displayTotalFat, 20)
 
+'''Draws the UI Element: Instructions'''
 def drawInstructions():
 
     explaination = explainationDictionary["Instructions"]
@@ -835,6 +852,7 @@ def drawInstructions():
     #Body
     autoTextBreak(explaination, (EXPLAINATION_COORDS[0], EXPLAINATION_COORDS[1] + 40))
 
+'''Draws the UI Element: Explanation'''
 def drawHelpxplaination(type, coords):
 
     explaination = explainationDictionary[type]
@@ -842,6 +860,7 @@ def drawHelpxplaination(type, coords):
     #Body
     autoTextBreak(explaination, (coords[0], coords[1]))
 
+'''Declares/resets all variables, recreates all UI components'''
 startup()
 
 '''==================================== Main Game Loop ===================================='''
@@ -903,11 +922,10 @@ while running:
             currentRow[1] = currentRow[1] + 1 # currentRow[1] is the number of clicks in the row
 
             '''
-            These are in drawing order not stage order
             Stage 1 (Fertilize): 1-12
             Stage 2 (Till): 13
             Stage 3 (Irrigate): 14
-            Stage 4 (Seed): 26 - 38
+            Stage 4 (Seed) *Depending on seeds example is 12*: 26 - 38
             '''
 
             #First Stage - Fertilizes the seeds 
@@ -990,3 +1008,4 @@ while running:
     pg.display.flip()
     clock.tick(20)
 
+print("Je suis fini!")
