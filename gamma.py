@@ -103,7 +103,7 @@ TOTAL_IMPACT_END_SCREEN_COORDS = (650, 420)
 #Ordered: quanitity per plant, wieght per item (grams), carbs per item (grams), protein per item(grams), fat per item(grams), calories per item
 #weeks until grown, seeds per row, is it a fruit plant, is it a special plant?, what color is the fruit?
 vegetableInfoDictionary = {
-"Vegetable": [0, 0, 0, 0, 0, 0, 0, 0, False, False, growingStageColor], "Bellpepper":  [7, 400, 24, 4, 1.2, 124, 14, 24, True, False, bellpepperColor], "Tomato" : [16, 900, 35.1, 8.1, 1.8, 162, 11, 24, True, False, tomatoColor], 
+"Vegetable": [0, 0, 0, 0, 0, 0, 1, 0, False, False, growingStageColor], "Bellpepper":  [7, 400, 24, 4, 1.2, 124, 14, 24, True, False, bellpepperColor], "Tomato" : [16, 900, 35.1, 8.1, 1.8, 162, 11, 24, True, False, tomatoColor], 
 "Potato" : [6, 200, 40.1, 3.8, 0.2, 174, 14, 36, False, False, potatoColor], "Carrot" : [1, 61, 5.856, 0.549, 0.122, 25, 11, 120, False, False, carrotColor], "Onion" : [1, 110, 10, 1.2, 0.1, 44, 15, 36, False, True, onionColor], 
 "Corn" : [4, 90, 17, 2.9, 1.1, 77, 11, 54, False, True, cornColor], "Broccoli" : [3, 221, 15.47, 6.19, 0.884, 75.14, 11, 12, True, False, vineColor], "Eggplant" : [5, 548, 32, 5, 1, 136, 11, 54, True, False, eggplantColor]
 }
@@ -594,12 +594,8 @@ def readyToHarvest(row, bushColor = readyToHarvestColor, clear = False):
     plantInfo = vegetableInfoDictionary[row[3]]
     numberOfPlantsPerRow = plantInfo[7]
     
-    #Bug Brute Force Fixes
-    if numberOfPlantsPerRow != 0:
-        spacing = ROW_HEIGHT / numberOfPlantsPerRow
-    else:
-        spacing = 0
-
+    spacing = ROW_HEIGHT / numberOfPlantsPerRow
+        
     producesFruit = plantInfo[8]
     isSpecial = plantInfo[9]
     vegetable = row[3]
@@ -737,7 +733,13 @@ def drawPlantsSwitch (plant, clickedRow):
 
 '''Draws the UI Element: Total Impact for the end screen (creates it in the middle instead of the right side)'''
 def drawTotalImpactEndScreen ():
-
+    '''
+    print (totalWieght)
+    print (totalCarbs)
+    print (totalProtein)
+    print (totalWieght)
+    '''
+    
     displayTotalCalories = readableText(int(totalCalories))
 
     if len(str(int(totalWieght))) > 3:
@@ -755,7 +757,7 @@ def drawTotalImpactEndScreen ():
     else:
         displayTotalProtein = readableText(int(totalProtein)) + "g"
 
-    if len(str(int(totalProtein))) > 3:
+    if len(str(int(totalFat))) > 3:
         displayTotalFat = readableText(int(totalFat), True) + "kg"
     else:
         displayTotalFat = readableText(int(totalFat))  + "g"
@@ -824,7 +826,7 @@ def drawTotalImpact(vegetable = "Vegetable"):
     else:
         displayTotalProtein = readableText(int(totalProtein)) + "g"
 
-    if len(str(int(totalProtein))) > 3:
+    if len(str(int(totalFat))) > 3:
         displayTotalFat = readableText(int(totalFat), True) + "kg"
     else:
         displayTotalFat = readableText(int(totalFat))  + "g"
