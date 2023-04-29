@@ -78,7 +78,6 @@ totalProtein = 0
 totalFat = 0
 
 #In-the-background constants
-NUMBER_OF_PLANTS_PER_ROW = 12
 TIME_TO_END = 26
 ROW_HEIGHT = 717
 
@@ -206,7 +205,7 @@ def drawText (screen, topLeftPosition, text, textSize, drawRect = False, showInf
 def readableText(rawText, convertgTokg = False):
 
     if convertgTokg:
-        rawText = int(rawText / 1000)
+        rawText = int(round(rawText / 1000, 0))
     
     #splits up the list
     textList = list(str(rawText))
@@ -306,7 +305,7 @@ def createSigns ():
         if rows[row][3] != "Vegetable":
             drawPlantsSwitch(rows[row][3], row) 
 
-def createSlots ():
+def createSlots (): 
     NUMBER_OF_SLOTS = 8
 
     #slots are 50 by 50 squares
@@ -803,11 +802,11 @@ def drawTotalImpact(vegetable = "Vegetable"):
 
     nutritionalFacts = vegetableInfoDictionary[vegetable]
     
-    totalCalories = totalCalories + nutritionalFacts[5] * NUMBER_OF_PLANTS_PER_ROW
-    totalWieght = totalWieght + nutritionalFacts[1] * NUMBER_OF_PLANTS_PER_ROW
-    totalCarbs = totalCarbs + nutritionalFacts[2] * NUMBER_OF_PLANTS_PER_ROW
-    totalProtein = totalProtein + nutritionalFacts[3] * NUMBER_OF_PLANTS_PER_ROW
-    totalFat = totalFat + nutritionalFacts[4]* NUMBER_OF_PLANTS_PER_ROW
+    totalCalories = totalCalories + nutritionalFacts[5] * nutritionalFacts[7] * 2
+    totalWieght = totalWieght + nutritionalFacts[1] * nutritionalFacts[7] * 2
+    totalCarbs = totalCarbs + nutritionalFacts[2] * nutritionalFacts[7] * 2
+    totalProtein = totalProtein + nutritionalFacts[3] * nutritionalFacts[7] * 2
+    totalFat = totalFat + nutritionalFacts[4]* nutritionalFacts[7] * 2 
     
     displayTotalCalories = readableText(int(totalCalories))
 
